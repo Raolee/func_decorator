@@ -9,9 +9,9 @@ import (
 type FunctionBuilder[T any] interface {
 	Func(fn T) FunctionBuilder[T]
 	BeforeIsolation(fns ...IsolationFuncType) FunctionBuilder[T]
-	BeforeComposition(fns ...T) FunctionBuilder[T]
+	BeforeComposition(fns ...ComposableFuncType) FunctionBuilder[T]
 	AfterIsolation(fns ...IsolationFuncType) FunctionBuilder[T]
-	AfterComposition(fns ...T) FunctionBuilder[T]
+	AfterComposition(fns ...ComposableFuncType) FunctionBuilder[T]
 	Test() error
 	Build() (*Function[T], error)
 }
@@ -57,7 +57,7 @@ func (fb *functionBuilder[T]) testBeforeIsolation() error {
 	return nil
 }
 
-func (fb *functionBuilder[T]) BeforeComposition(fns ...T) FunctionBuilder[T] {
+func (fb *functionBuilder[T]) BeforeComposition(fns ...ComposableFuncType) FunctionBuilder[T] {
 	fb.function.composableBeforeFuncs = fns
 	return fb
 }
@@ -106,7 +106,7 @@ func (fb *functionBuilder[T]) testAfterIsolation() error {
 	return nil
 }
 
-func (fb *functionBuilder[T]) AfterComposition(fns ...T) FunctionBuilder[T] {
+func (fb *functionBuilder[T]) AfterComposition(fns ...ComposableFuncType) FunctionBuilder[T] {
 	fb.function.composableAfterFuncs = fns
 	return fb
 }

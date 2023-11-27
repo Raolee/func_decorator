@@ -1,6 +1,7 @@
 package func_decorator
 
 import (
+	"context"
 	"fmt"
 	"reflect"
 )
@@ -40,9 +41,9 @@ func ConvertReflectValuesToAnySlice(rvs []reflect.Value) []any {
 
 func ConvertAnySliceToReflectValues(anySlice []any) []reflect.Value {
 	rvs := make([]reflect.Value, len(anySlice))
+
 	for i, a := range anySlice {
 		rvs[i] = convertToReflectValue(a)
-		//rvs[i] = reflect.ValueOf(a)
 	}
 	return rvs
 }
@@ -73,6 +74,9 @@ func convertToReflectValue(value any) reflect.Value {
 		}
 		return rv
 	case reflect.Ptr:
+		if _, ok := value.(context.Context); ok {
+			return reflect.ValueOf(value) // 컨텍스트는... 따로 처리해야한다 -_-
+		}
 		return convertToReflectValue(v.Elem().Interface())
 	default:
 		return reflect.ValueOf(value)
