@@ -8,49 +8,53 @@ import (
 )
 
 func TestFunction_Call(t *testing.T) {
+
+	testErr := errors.New("test error")
+	type TestFuncType func(ctx context.Context, args ...any) ([]any, error)
+
 	testCases := []struct {
 		name                  string
-		fn                    any
+		fn                    TestFuncType
 		args                  []any
-		isolatedBeforeFuncs   []func(ctx context.Context, args ...any)
-		composableBeforeFuncs []any
-		isolatedAfterFuncs    []func(ctx context.Context, args ...any)
-		composableAfterFuncs  []any
+		isolatedBeforeFuncs   []IsolationFuncType
+		composableBeforeFuncs []TestFuncType
+		isolatedAfterFuncs    []IsolationFuncType
+		composableAfterFuncs  []TestFuncType
 		expectedResults       []any
 		expectedError         error
 	}{
 		{
-			name: "Test case 1",
+			name: "no error",
 			fn: func(ctx context.Context, args ...any) ([]any, error) {
 				return []any{args[0]}, nil
 			},
-			args:                  []any{"test1"},
-			isolatedBeforeFuncs:   []func(ctx context.Context, args ...any){},
-			composableBeforeFuncs: []any{},
-			isolatedAfterFuncs:    []func(ctx context.Context, args ...any){},
-			composableAfterFuncs:  []any{},
-			expectedResults:       []any{"test1"},
+			args:                  []any{context.Background(), "test1"},
+			isolatedBeforeFuncs:   []IsolationFuncType{},
+			composableBeforeFuncs: []TestFuncType{},
+			isolatedAfterFuncs:    []IsolationFuncType{},
+			composableAfterFuncs:  []TestFuncType{},
+			expectedResults:       []any{[]any{"test1"}},
 			expectedError:         nil,
 		},
 		{
-			name: "Test case 2",
+			name: "occur error",
 			fn: func(ctx context.Context, args ...any) ([]any, error) {
-				return nil, errors.New("test error")
+				return nil, testErr
 			},
-			args:                  []any{"test2"},
-			isolatedBeforeFuncs:   []func(ctx context.Context, args ...any){},
-			composableBeforeFuncs: []any{},
-			isolatedAfterFuncs:    []func(ctx context.Context, args ...any){},
-			composableAfterFuncs:  []any{},
+			args:                  []any{context.Background(), "test2"},
+			isolatedBeforeFuncs:   []IsolationFuncType{},
+			composableBeforeFuncs: []TestFuncType{},
+			isolatedAfterFuncs:    []IsolationFuncType{},
+			composableAfterFuncs:  []TestFuncType{},
 			expectedResults:       nil,
-			expectedError:         errors.New("test error"),
+			expectedError:         testErr,
 		},
 		// Add more test cases as needed.
 	}
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			f := &Function{
+			f := &Function[TestFuncType]{
 				fn:                    tc.fn,
 				fnInputTypes:          []reflect.Type{},
 				fnOutputTypes:         []reflect.Type{},
@@ -66,7 +70,7 @@ func TestFunction_Call(t *testing.T) {
 				t.Errorf("Expected results %v, but got %v", tc.expectedResults, results)
 			}
 
-			if !reflect.DeepEqual(err, tc.expectedError) {
+			if !errors.Is(err, tc.expectedError) {
 				t.Errorf("Expected error %v, but got %v", tc.expectedError, err)
 			}
 		})

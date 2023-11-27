@@ -33,7 +33,7 @@ func ExtractFuncType(fn any) ([]reflect.Type, []reflect.Type) {
 func ConvertReflectValuesToAnySlice(rvs []reflect.Value) []any {
 	anys := make([]any, len(rvs))
 	for i, rv := range rvs {
-		anys[i] = rv.Interface()
+		anys[i] = convertToAny(rv)
 	}
 	return anys
 }
@@ -42,8 +42,24 @@ func ConvertAnySliceToReflectValues(anySlice []any) []reflect.Value {
 	rvs := make([]reflect.Value, len(anySlice))
 	for i, a := range anySlice {
 		rvs[i] = convertToReflectValue(a)
+		//rvs[i] = reflect.ValueOf(a)
 	}
 	return rvs
+}
+
+func convertToAny(rv reflect.Value) any {
+	// reflect.Value 자체가 유효한지 먼저 체크
+	if !rv.IsValid() {
+		return nil
+	}
+	if rv.Kind() == reflect.Ptr {
+		if rv.IsNil() {
+			return nil // Ptr 선언만 되어 있고 값이 비어있음
+		}
+		return rv.Interface() // Ptr 자체의 주소를 리턴
+	}
+
+	return rv.Interface() // Value가 가진 값을 리턴
 }
 
 func convertToReflectValue(value any) reflect.Value {

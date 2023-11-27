@@ -1,52 +1,51 @@
 package func_decorator
 
 import (
-	"context"
 	"errors"
 	"fmt"
 	"reflect"
 )
 
-type FunctionBuilder interface {
-	Func(fn any) FunctionBuilder
-	BeforeIsolation(fns ...func(ctx context.Context, args ...any)) FunctionBuilder
-	BeforeComposition(fns ...any) FunctionBuilder
-	AfterIsolation(fns ...func(ctx context.Context, args ...any)) FunctionBuilder
-	AfterComposition(fns ...any) FunctionBuilder
+type FunctionBuilder[T any] interface {
+	Func(fn T) FunctionBuilder[T]
+	BeforeIsolation(fns ...IsolationFuncType) FunctionBuilder[T]
+	BeforeComposition(fns ...T) FunctionBuilder[T]
+	AfterIsolation(fns ...IsolationFuncType) FunctionBuilder[T]
+	AfterComposition(fns ...T) FunctionBuilder[T]
 	Test() error
-	Build() (*Function, error)
+	Build() (*Function[T], error)
 }
 
-type functionBuilder struct {
-	function *Function
+type functionBuilder[T any] struct {
+	function *Function[T]
 }
 
-func NewFunctionBuilder() FunctionBuilder {
-	return &functionBuilder{function: &Function{}}
+func NewFunctionBuilder[T any]() FunctionBuilder[T] {
+	return &functionBuilder[T]{function: &Function[T]{}}
 }
 
-func (fb *functionBuilder) Func(fn any) FunctionBuilder {
+func (fb *functionBuilder[T]) Func(fn T) FunctionBuilder[T] {
 	fb.function.fn = fn
 	fb.function.fnInputTypes, fb.function.fnOutputTypes = ExtractFuncType(fn)
 	return fb
 }
 
-func (fb *functionBuilder) testFunc() error {
-	if fb.function.fn == nil {
-		return errors.New("fn is nil")
-	}
+func (fb *functionBuilder[T]) testFunc() error {
+	//if fb.function.fn == nil {
+	//	return errors.New("fn is nil")
+	//}
 	if reflect.ValueOf(fb.function.fn).Kind() != reflect.Func {
 		return errors.New("fn isn't function type (reflect.Func)")
 	}
 	return nil
 }
 
-func (fb *functionBuilder) BeforeIsolation(fns ...func(ctx context.Context, args ...any)) FunctionBuilder {
+func (fb *functionBuilder[T]) BeforeIsolation(fns ...IsolationFuncType) FunctionBuilder[T] {
 	fb.function.isolatedBeforeFuncs = fns
 	return fb
 }
 
-func (fb *functionBuilder) testBeforeIsolation() error {
+func (fb *functionBuilder[T]) testBeforeIsolation() error {
 	// func slice 가 비어거나 null이 없어야 함
 	if len(fb.function.isolatedBeforeFuncs) > 0 {
 		for i, beforeFunc := range fb.function.isolatedBeforeFuncs {
@@ -58,20 +57,20 @@ func (fb *functionBuilder) testBeforeIsolation() error {
 	return nil
 }
 
-func (fb *functionBuilder) BeforeComposition(fns ...any) FunctionBuilder {
+func (fb *functionBuilder[T]) BeforeComposition(fns ...T) FunctionBuilder[T] {
 	fb.function.composableBeforeFuncs = fns
 	return fb
 }
 
-func (fb *functionBuilder) testBeforeComposition() error {
+func (fb *functionBuilder[T]) testBeforeComposition() error {
 	inputTypes, _ := ExtractFuncType(fb.function.fn)
 	if len(fb.function.composableBeforeFuncs) > 0 {
 		for i, composableBefore := range fb.function.composableBeforeFuncs {
 
 			// composableBefore 는 nil 일 수 없음
-			if composableBefore == nil {
-				return errors.New(fmt.Sprintf("composableBefores[%d] is nil", i))
-			}
+			//if composableBefore == nil {
+			//	return errors.New(fmt.Sprintf("composableBefores[%d] is nil", i))
+			//}
 
 			// composableBefore 는 function 이어야 함
 			if reflect.ValueOf(composableBefore).Kind() != reflect.Func {
@@ -90,12 +89,12 @@ func (fb *functionBuilder) testBeforeComposition() error {
 	return nil
 }
 
-func (fb *functionBuilder) AfterIsolation(fns ...func(ctx context.Context, args ...any)) FunctionBuilder {
+func (fb *functionBuilder[T]) AfterIsolation(fns ...IsolationFuncType) FunctionBuilder[T] {
 	fb.function.isolatedAfterFuncs = fns
 	return fb
 }
 
-func (fb *functionBuilder) testAfterIsolation() error {
+func (fb *functionBuilder[T]) testAfterIsolation() error {
 	// func slice 가 비어거나 null이 없어야 함
 	if len(fb.function.isolatedAfterFuncs) > 0 {
 		for i, afterFunc := range fb.function.isolatedAfterFuncs {
@@ -107,20 +106,20 @@ func (fb *functionBuilder) testAfterIsolation() error {
 	return nil
 }
 
-func (fb *functionBuilder) AfterComposition(fns ...any) FunctionBuilder {
+func (fb *functionBuilder[T]) AfterComposition(fns ...T) FunctionBuilder[T] {
 	fb.function.composableAfterFuncs = fns
 	return fb
 }
 
-func (fb *functionBuilder) testAfterComposition() error {
+func (fb *functionBuilder[T]) testAfterComposition() error {
 	inputTypes, _ := ExtractFuncType(fb.function.fn)
 	if len(fb.function.composableAfterFuncs) > 0 {
 		for i, composableAfter := range fb.function.composableAfterFuncs {
 
 			// composableBefore 는 nil 일 수 없음
-			if composableAfter == nil {
-				return errors.New(fmt.Sprintf("composableAfters[%d] is nil", i))
-			}
+			//if composableAfter == nil {
+			//	return errors.New(fmt.Sprintf("composableAfters[%d] is nil", i))
+			//}
 
 			// composableBefore 는 function 이어야 함
 			if reflect.ValueOf(composableAfter).Kind() != reflect.Func {
@@ -139,7 +138,7 @@ func (fb *functionBuilder) testAfterComposition() error {
 	return nil
 }
 
-func (fb *functionBuilder) Test() error {
+func (fb *functionBuilder[T]) Test() error {
 	err := fb.testBeforeIsolation()
 	if err != nil {
 		return err
@@ -163,7 +162,7 @@ func (fb *functionBuilder) Test() error {
 	return nil
 }
 
-func (fb *functionBuilder) Build() (*Function, error) {
+func (fb *functionBuilder[T]) Build() (*Function[T], error) {
 	if err := fb.Test(); err != nil {
 		return nil, err
 	}

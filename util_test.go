@@ -28,8 +28,8 @@ func TestExtractFuncType(t *testing.T) {
 			fn: func(a int, b string) (int, string) {
 				return a, b
 			},
-			expectedInTypes:  []reflect.Type{reflect.TypeOf(0), reflect.TypeOf("")},
-			expectedOutTypes: []reflect.Type{reflect.TypeOf(0), reflect.TypeOf("")},
+			expectedInTypes:  []reflect.Type{reflect.TypeOf(0), reflect.TypeOf("")}, // input : int, string
+			expectedOutTypes: []reflect.Type{reflect.TypeOf(0), reflect.TypeOf("")}, // output : int, string
 		},
 		{
 			name:             "no inputs, no outputs",
@@ -93,6 +93,8 @@ func TestExtractFuncType(t *testing.T) {
 }
 
 func TestConvertReflectValuesToAnySlice(t *testing.T) {
+	intPtr := new(int)
+
 	testCases := []struct {
 		name          string
 		reflectValues []reflect.Value
@@ -130,8 +132,13 @@ func TestConvertReflectValuesToAnySlice(t *testing.T) {
 		},
 		{
 			name:          "[*int] => [*int]",
-			reflectValues: []reflect.Value{reflect.ValueOf(new(int)).Elem()},
-			expectedAny:   []any{new(int)},
+			reflectValues: []reflect.Value{reflect.ValueOf(intPtr)},
+			expectedAny:   []any{intPtr},
+		},
+		{
+			name:          "[nil] => [nil]",
+			reflectValues: []reflect.Value{reflect.ValueOf(nil)},
+			expectedAny:   []any{nil},
 		},
 		{
 			name:          "[any] => [any]",
