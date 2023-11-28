@@ -1,4 +1,4 @@
-package func_decorator
+package v1
 
 import (
 	"errors"
