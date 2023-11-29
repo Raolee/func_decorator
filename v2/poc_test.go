@@ -10,26 +10,26 @@ import (
 
 // Generic Func 을 reflect로 실행해도 문제가 없는지 검증
 func TestExecuteGenericFuncUsingReflect(t *testing.T) {
-	builder := NewFunctionBuilder[string, string]()
+	builder := NewDecoratedFunctionBuilder[string, string]()
 
 	var fn = func(ctx context.Context, req string) (string, error) {
 		fmt.Println(req)
 		return req + "/processed", nil
 	}
-	var requestInterceptor = func(ctx context.Context, req string) (string, error) {
+	var reqDecorator = func(ctx context.Context, req string) (string, error) {
 		return req + "/req_processed", nil
 	}
-	var responseInterceptor = func(ctx context.Context, res string) (string, error) {
+	var resDecorator = func(ctx context.Context, res string) (string, error) {
 		return res + "/res_processed", nil
 	}
-	var exceptionInterceptor = func(ctx context.Context, req string, err error) error {
+	var exDecorator = func(ctx context.Context, req string, err error) error {
 		return errors.Join(err, errors.New("custom raol error"))
 	}
 
 	builder.Func(fn)
-	builder.RequestMiddleware(requestInterceptor, requestInterceptor)
-	builder.ResponseMiddleware(responseInterceptor, responseInterceptor)
-	builder.ExceptionMiddleware(exceptionInterceptor)
+	builder.RequestDecorators(reqDecorator, reqDecorator)
+	builder.ResponseDecorators(resDecorator, resDecorator)
+	builder.ExceptionDecorators(exDecorator)
 	builder.PanicHandling(true)
 	function := builder.Build()
 
@@ -37,26 +37,26 @@ func TestExecuteGenericFuncUsingReflect(t *testing.T) {
 }
 
 func TestExecuteGenericFuncToAnotherGenericFuncUsingReflect(t *testing.T) {
-	fromFuncBuilder := NewFunctionBuilder[int, int]()
+	fromFuncBuilder := NewDecoratedFunctionBuilder[int, int]()
 	var fromFn = func(ctx context.Context, req int) (int, error) {
 		fmt.Println("FromFunc ", req)
 		return req, nil
 	}
-	var fromRequestInterceptor = func(ctx context.Context, req int) (int, error) {
-		fmt.Println("FromFunc Req Interceptor ", req)
+	var fromReqDecorator = func(ctx context.Context, req int) (int, error) {
+		fmt.Println("FromFunc Req Decorator ", req)
 		return req + 1, nil
 	}
-	var fromResponseInterceptor = func(ctx context.Context, res int) (int, error) {
-		fmt.Println("FromFunc Res Interceptor ", res)
+	var fromResDecorator = func(ctx context.Context, res int) (int, error) {
+		fmt.Println("FromFunc Res Decorator ", res)
 		return res + 1, nil
 	}
-	var fromExceptionInterceptor = func(ctx context.Context, req int, err error) error {
+	var fromExDecorator = func(ctx context.Context, req int, err error) error {
 		return errors.Join(err, errors.New("custom raol error"))
 	}
 	fromFuncBuilder.Func(fromFn)
-	fromFuncBuilder.RequestMiddleware(fromRequestInterceptor, fromRequestInterceptor)
-	fromFuncBuilder.ResponseMiddleware(fromResponseInterceptor, fromResponseInterceptor)
-	fromFuncBuilder.ExceptionMiddleware(fromExceptionInterceptor)
+	fromFuncBuilder.RequestDecorators(fromReqDecorator, fromReqDecorator)
+	fromFuncBuilder.ResponseDecorators(fromResDecorator, fromResDecorator)
+	fromFuncBuilder.ExceptionDecorators(fromExDecorator)
 	fromFuncBuilder.PanicHandling(true)
 	fromFunction := fromFuncBuilder.Build()
 
@@ -65,26 +65,26 @@ func TestExecuteGenericFuncToAnotherGenericFuncUsingReflect(t *testing.T) {
 		return strconv.Itoa(req), nil
 	}
 
-	toFuncBuilder := NewFunctionBuilder[string, string]()
+	toFuncBuilder := NewDecoratedFunctionBuilder[string, string]()
 	var toFn = func(ctx context.Context, req string) (string, error) {
 		fmt.Println("ToFunc : ", req)
 		return req + "/processed", nil
 	}
-	var toRequestInterceptor = func(ctx context.Context, req string) (string, error) {
-		fmt.Println("ToFunc Req Interceptor : ", req)
+	var toReqDecorator = func(ctx context.Context, req string) (string, error) {
+		fmt.Println("ToFunc Req Decorator : ", req)
 		return req + "/req_processed", nil
 	}
-	var toResponseInterceptor = func(ctx context.Context, res string) (string, error) {
-		fmt.Println("ToFunc Res Interceptor : ", res)
+	var toResDecorator = func(ctx context.Context, res string) (string, error) {
+		fmt.Println("ToFunc Res Decorator : ", res)
 		return res + "/res_processed", nil
 	}
-	var toExceptionInterceptor = func(ctx context.Context, req string, err error) error {
+	var toExDecorator = func(ctx context.Context, req string, err error) error {
 		return errors.Join(err, errors.New("custom raol error"))
 	}
 	toFuncBuilder.Func(toFn)
-	toFuncBuilder.RequestMiddleware(toRequestInterceptor, toRequestInterceptor)
-	toFuncBuilder.ResponseMiddleware(toResponseInterceptor, toResponseInterceptor)
-	toFuncBuilder.ExceptionMiddleware(toExceptionInterceptor)
+	toFuncBuilder.RequestDecorators(toReqDecorator, toReqDecorator)
+	toFuncBuilder.ResponseDecorators(toResDecorator, toResDecorator)
+	toFuncBuilder.ExceptionDecorators(toExDecorator)
 	toFuncBuilder.PanicHandling(true)
 	toFunction := toFuncBuilder.Build()
 

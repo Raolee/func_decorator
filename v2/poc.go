@@ -68,7 +68,7 @@ func (c *connectorBuilder) testFromFunc() error {
 	return nil
 }
 
-// AdaptFunction | FromFunc 과 ToFunc 의 in/out types 을 맞춰주는 Adapt Function 을 주입합니다.
+// AdaptFunction | FromFunc 과 ToFunc 의 in/out types 을 맞춰주는 Adapt DecoratedFunction 을 주입합니다.
 // 본 메서드는 필수가 아닙니다. (AdaptFunction 이 nil 일 경우, FromFunc 의 output 을 ToFunc 의 input 으로 바로 넣게됨)
 // AdaptFunction 의 input 은 FromFunc 의 output 과 형식이 같아야 합니다.
 // 또한, AdaptFunction 의 output 은 ToFunc 의 input 과 형식이 같아야 합니다.
@@ -190,7 +190,7 @@ func (c *connector) Invoke(args ...any) (any, error) {
 	var toFuncInputValues = append([]reflect.Value{ctxArgReflectValue}, fromOutputValues[:len(fromOutputValues)-1]...)
 	if c.adaptFunc != nil {
 		adaptFuncValue := reflect.ValueOf(c.adaptFunc)
-		// adapt func 으로 Function Type 매칭 시킴
+		// adapt func 으로 DecoratedFunction Type 매칭 시킴
 		adaptOutputValues := adaptFuncValue.Call(toFuncInputValues)
 		if err := hasError(adaptOutputValues); err != nil {
 			return nil, err

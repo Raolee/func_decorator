@@ -7,13 +7,13 @@ import (
 	"testing"
 )
 
-// TestFunctionCallBasicFunctionality - Function의 기본 기능 테스트
-func TestFunctionCallBasicFunctionality(t *testing.T) {
+// TestDecoratedFunctionCallBasicFunctionality - Function의 기본 기능 테스트
+func TestDecoratedFunctionCallBasicFunctionality(t *testing.T) {
 	fn := func(ctx context.Context, req string) (string, error) {
 		return req + "/processed", nil
 	}
 
-	f := Function[string, string]{
+	f := DecoratedFunction[string, string]{
 		fn: fn,
 	}
 
@@ -24,15 +24,24 @@ func TestFunctionCallBasicFunctionality(t *testing.T) {
 	if res != "test/processed" {
 		t.Errorf("Expected 'test/processed', got '%s'", res)
 	}
+
+	anyFunction := f.Any()
+	anyRes, err := anyFunction(context.Background(), "test")
+	if err != nil {
+		t.Errorf("Unexpected error: %v", err)
+	}
+	if anyRes != "test/processed" {
+		t.Errorf("Expected 'test/processed', got '%s'", res)
+	}
 }
 
-// TestFunctionCallPanicHandling - 패닉 핸들링 테스트
-func TestFunctionCallPanicHandling(t *testing.T) {
+// TestDecoratedFunctionCallPanicHandling - 패닉 핸들링 테스트
+func TestDecoratedFunctionCallPanicHandling(t *testing.T) {
 	fn := func(ctx context.Context, req string) (string, error) {
 		panic("Test panic")
 	}
 
-	f := Function[string, string]{
+	f := DecoratedFunction[string, string]{
 		fn:            fn,
 		panicHandling: true,
 	}
@@ -43,9 +52,9 @@ func TestFunctionCallPanicHandling(t *testing.T) {
 	}
 }
 
-// TestFunctionCallWithRequestMiddleware - 요청 미들웨어 테스트
-func TestFunctionCallWithRequestMiddleware(t *testing.T) {
-	requestInterceptor := func(ctx context.Context, req string) (string, error) {
+// TestDecoratedFunctionCallWithRequestMiddleware - 요청 미들웨어 테스트
+func TestDecoratedFunctionCallWithRequestMiddleware(t *testing.T) {
+	reqDecorator := func(ctx context.Context, req string) (string, error) {
 		return req + "/modified", nil
 	}
 
@@ -53,8 +62,8 @@ func TestFunctionCallWithRequestMiddleware(t *testing.T) {
 		return req + "/processed", nil
 	}
 
-	f := Function[string, string]{
-		requestMiddleware: []func(ctx context.Context, req string) (string, error){requestInterceptor},
+	f := DecoratedFunction[string, string]{
+		requestDecorators: []func(ctx context.Context, req string) (string, error){reqDecorator},
 		fn:                fn,
 	}
 
@@ -67,9 +76,9 @@ func TestFunctionCallWithRequestMiddleware(t *testing.T) {
 	}
 }
 
-// TestFunctionCallWithResponseMiddleware - 응답 미들웨어 테스트
-func TestFunctionCallWithResponseMiddleware(t *testing.T) {
-	responseInterceptor := func(ctx context.Context, res string) (string, error) {
+// TestDecoratedFunctionCallWithResponseMiddleware - 응답 미들웨어 테스트
+func TestDecoratedFunctionCallWithResponseMiddleware(t *testing.T) {
+	resDecorator := func(ctx context.Context, res string) (string, error) {
 		return res + "/modified", nil
 	}
 
@@ -77,9 +86,9 @@ func TestFunctionCallWithResponseMiddleware(t *testing.T) {
 		return req + "/processed", nil
 	}
 
-	f := Function[string, string]{
+	f := DecoratedFunction[string, string]{
 		fn:                 fn,
-		responseMiddleware: []func(ctx context.Context, res string) (string, error){responseInterceptor},
+		responseDecorators: []func(ctx context.Context, res string) (string, error){resDecorator},
 	}
 
 	res, err := f.Call(context.Background(), "test")
@@ -91,19 +100,19 @@ func TestFunctionCallWithResponseMiddleware(t *testing.T) {
 	}
 }
 
-// TestFunctionCallWithErrorMiddleware - 에러 미들웨어 테스트
-func TestFunctionCallWithErrorMiddleware(t *testing.T) {
-	errorInterceptor := func(ctx context.Context, req string, err error) error {
-		return fmt.Errorf("Modified error: %w", err)
+// TestDecoratedFunctionCallWithErrorMiddleware - 에러 미들웨어 테스트
+func TestDecoratedFunctionCallWithErrorMiddleware(t *testing.T) {
+	exDecorator := func(ctx context.Context, req string, err error) error {
+		return fmt.Errorf("modified error: %w", err)
 	}
 
 	fn := func(ctx context.Context, req string) (string, error) {
 		return "", errors.New("original error")
 	}
 
-	f := Function[string, string]{
+	f := DecoratedFunction[string, string]{
 		fn:                  fn,
-		exceptionMiddleware: []func(ctx context.Context, req string, err error) error{errorInterceptor},
+		exceptionDecorators: []func(ctx context.Context, req string, err error) error{exDecorator},
 	}
 
 	_, err := f.Call(context.Background(), "Test Request")
@@ -112,7 +121,7 @@ func TestFunctionCallWithErrorMiddleware(t *testing.T) {
 	}
 }
 
-func TestFunctionCallWithAllCaseUsingStruct(t *testing.T) {
+func TestDecoratedFunctionCallWithAllCaseUsingStruct(t *testing.T) {
 	type TestRequest struct {
 		A int
 		B string
@@ -121,22 +130,22 @@ func TestFunctionCallWithAllCaseUsingStruct(t *testing.T) {
 		A int
 		B string
 	}
-	requestInterceptor := func(ctx context.Context, req *TestRequest) (*TestRequest, error) {
+	reqDecorator := func(ctx context.Context, req *TestRequest) (*TestRequest, error) {
 		req.A++
 		req.B = req.B + "/modified"
 		return req, nil
 	}
-	responseInterceptor := func(ctx context.Context, res *TestResponse) (*TestResponse, error) {
+	resDecorator := func(ctx context.Context, res *TestResponse) (*TestResponse, error) {
 		res.A++
 		res.B = res.B + "/modified"
 		return res, nil
 	}
-	f := Function[*TestRequest, *TestResponse]{
+	f := DecoratedFunction[*TestRequest, *TestResponse]{
 		fn: func(ctx context.Context, req *TestRequest) (*TestResponse, error) {
 			return &TestResponse{A: req.A + 1, B: req.B + "/processed"}, nil
 		},
-		requestMiddleware:  []func(ctx context.Context, req *TestRequest) (*TestRequest, error){requestInterceptor},
-		responseMiddleware: []func(ctx context.Context, res *TestResponse) (*TestResponse, error){responseInterceptor},
+		requestDecorators:  []func(ctx context.Context, req *TestRequest) (*TestRequest, error){reqDecorator},
+		responseDecorators: []func(ctx context.Context, res *TestResponse) (*TestResponse, error){resDecorator},
 	}
 
 	res, err := f.Call(context.Background(), &TestRequest{A: 0, B: "test"})

@@ -1,6 +1,7 @@
 package v2
 
 import (
+	"context"
 	"reflect"
 )
 
@@ -25,4 +26,24 @@ func zeroValue[T any]() T {
 
 func zeroValueWithType(t reflect.Type) any {
 	return reflect.Zero(t).Interface()
+}
+
+func SetNodeFlowInContext(ctx context.Context, next string) context.Context {
+	if value := ctx.Value("nodeFlow"); value == nil {
+		return context.WithValue(ctx, "nodeFlow", next)
+	} else if nodeFlow, ok := value.(string); ok {
+		return context.WithValue(ctx, "nodeFlow", nodeFlow+"/"+next)
+	} else {
+		return context.WithValue(ctx, "nodeFlow", next)
+	}
+}
+
+func GetNodeFlowInContext(ctx context.Context) string {
+	value := ctx.Value("nodeFlow")
+	if value != nil {
+		if flow, ok := value.(string); ok {
+			return flow
+		}
+	}
+	return ""
 }
