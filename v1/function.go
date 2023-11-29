@@ -72,7 +72,7 @@ func executeFuncUsingReflect[T any](fn T, ctx context.Context, args ...any) (res
 	}(&err)
 	// reflect 를 이용한 함수 실행 준비
 	fnValue := reflect.ValueOf(fn)                                                                                // fn 을 reflect.Value 로 바꿈
-	reflectInputs := append([]reflect.Value{convertToReflectValue(ctx)}, ConvertAnySliceToReflectValues(args)...) // 맨 앞에 ctx를 넣음
+	reflectInputs := append([]reflect.Value{ConvertToReflectValue(ctx)}, ConvertAnySliceToReflectValues(args)...) // 맨 앞에 ctx를 넣음
 	reflectOutputs := fnValue.Call(reflectInputs)
 
 	// 메인 func 결과 중 맨 마지막 output 을 에러로 가정하고 체크

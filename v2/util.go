@@ -1,6 +1,8 @@
 package v2
 
-import "reflect"
+import (
+	"reflect"
+)
 
 // GetGenericType | 제네릭 타입을 reflect.Type 으로 리턴합니다.
 func GetGenericType[T any]() reflect.Type {
@@ -19,4 +21,8 @@ func zeroValue[T any]() T {
 	}
 
 	return reflect.Zero(zeroType).Interface().(T)
+}
+
+func zeroValueWithType(t reflect.Type) any {
+	return reflect.Zero(t).Interface()
 }

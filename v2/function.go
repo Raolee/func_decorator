@@ -15,6 +15,7 @@ type Function[REQ any, RES any] struct {
 }
 
 func (f *Function[REQ, RES]) Call(ctx context.Context, req REQ) (res RES, err error) {
+	// panic 핸들링 처리
 	if f.panicHandling {
 		defer func(e *error) {
 			if r := recover(); r != nil {
@@ -23,8 +24,10 @@ func (f *Function[REQ, RES]) Call(ctx context.Context, req REQ) (res RES, err er
 			}
 		}(&err)
 	}
+
 	res, err = f.call(ctx, req)
 
+	// 에러 미들웨어 처리
 	if err != nil && len(f.exceptionMiddleware) > 0 {
 		for _, exceptionInterceptor := range f.exceptionMiddleware {
 			err = exceptionInterceptor(ctx, req, err)
@@ -37,7 +40,7 @@ func (f *Function[REQ, RES]) Call(ctx context.Context, req REQ) (res RES, err er
 func (f *Function[REQ, RES]) call(ctx context.Context, req REQ) (RES, error) {
 
 	var err error
-	// request interceptor 호출
+	// request 미들웨어 수행
 	for _, requestInterceptor := range f.requestMiddleware {
 		req, err = requestInterceptor(ctx, req)
 		if err != nil {
@@ -52,7 +55,7 @@ func (f *Function[REQ, RES]) call(ctx context.Context, req REQ) (RES, error) {
 		return zeroValue[RES](), err
 	}
 
-	// request interceptor 호출
+	// response 미들웨어 수행
 	for _, responseInterceptor := range f.responseMiddleware {
 		res, err = responseInterceptor(ctx, res)
 		if err != nil {

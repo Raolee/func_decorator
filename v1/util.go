@@ -43,7 +43,7 @@ func ConvertAnySliceToReflectValues(anySlice []any) []reflect.Value {
 	rvs := make([]reflect.Value, len(anySlice))
 
 	for i, a := range anySlice {
-		rvs[i] = convertToReflectValue(a)
+		rvs[i] = ConvertToReflectValue(a)
 	}
 	return rvs
 }
@@ -63,21 +63,21 @@ func convertToAny(rv reflect.Value) any {
 	return rv.Interface() // Value가 가진 값을 리턴
 }
 
-func convertToReflectValue(value any) reflect.Value {
+func ConvertToReflectValue(value any) reflect.Value {
 	v := reflect.ValueOf(value)
 	switch v.Kind() {
 	case reflect.Slice:
 		sliceValue := reflect.ValueOf(value)
 		rv := reflect.MakeSlice(sliceValue.Type(), sliceValue.Len(), sliceValue.Cap())
 		for i := 0; i < sliceValue.Len(); i++ {
-			rv.Index(i).Set(convertToReflectValue(sliceValue.Index(i).Interface()))
+			rv.Index(i).Set(ConvertToReflectValue(sliceValue.Index(i).Interface()))
 		}
 		return rv
 	case reflect.Ptr:
 		if _, ok := value.(context.Context); ok {
 			return reflect.ValueOf(value) // 컨텍스트는... 따로 처리해야한다 -_-
 		}
-		return convertToReflectValue(v.Elem().Interface())
+		return ConvertToReflectValue(v.Elem().Interface())
 	default:
 		return reflect.ValueOf(value)
 	}
