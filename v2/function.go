@@ -8,10 +8,10 @@ import (
 
 type Function[REQ any, RES any] struct {
 	panicHandling       bool
-	requestInterceptor  []func(ctx context.Context, req REQ) (REQ, error)
+	requestMiddleware   []func(ctx context.Context, req REQ) (REQ, error)
 	fn                  func(ctx context.Context, req REQ) (RES, error)
-	responseInterceptor []func(ctx context.Context, req REQ, res RES) (RES, error)
-	exceptFunc          func(ctx context.Context, req REQ, err error) error
+	responseMiddleware  []func(ctx context.Context, res RES) (RES, error)
+	exceptionMiddleware []func(ctx context.Context, req REQ, err error) error
 }
 
 func (f *Function[REQ, RES]) Call(ctx context.Context, req REQ) (res RES, err error) {
@@ -25,8 +25,10 @@ func (f *Function[REQ, RES]) Call(ctx context.Context, req REQ) (res RES, err er
 	}
 	res, err = f.call(ctx, req)
 
-	if err != nil && f.exceptFunc != nil {
-		err = f.exceptFunc(ctx, req, err)
+	if err != nil && len(f.exceptionMiddleware) > 0 {
+		for _, exceptionInterceptor := range f.exceptionMiddleware {
+			err = exceptionInterceptor(ctx, req, err)
+		}
 	}
 
 	return res, err
@@ -36,8 +38,8 @@ func (f *Function[REQ, RES]) call(ctx context.Context, req REQ) (RES, error) {
 
 	var err error
 	// request interceptor 호출
-	for _, reqInterceptor := range f.requestInterceptor {
-		req, err = reqInterceptor(ctx, req)
+	for _, requestInterceptor := range f.requestMiddleware {
+		req, err = requestInterceptor(ctx, req)
 		if err != nil {
 			return zeroValue[RES](), err
 		}
@@ -51,8 +53,8 @@ func (f *Function[REQ, RES]) call(ctx context.Context, req REQ) (RES, error) {
 	}
 
 	// request interceptor 호출
-	for _, resInterceptor := range f.responseInterceptor {
-		res, err = resInterceptor(ctx, req, res)
+	for _, responseInterceptor := range f.responseMiddleware {
+		res, err = responseInterceptor(ctx, res)
 		if err != nil {
 			return zeroValue[RES](), err
 		}

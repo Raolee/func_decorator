@@ -51,6 +51,7 @@ func TestGetGenericType(t *testing.T) {
 }
 
 func Test_zeroValue(t *testing.T) {
+
 	zeroInt := zeroValue[int]()
 	if zeroInt != 0 {
 		t.Errorf("zeroValue[int]() want 0")

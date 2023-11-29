@@ -7,7 +7,7 @@ func GetGenericType[T any]() reflect.Type {
 	return reflect.TypeOf((*T)(nil)).Elem()
 }
 
-// zeroValue | 제네릭 타입의 zero value를 반환합니다.
+// zeroValue | 제네릭 타입의 zero value 를 반환합니다.
 func zeroValue[T any]() T {
 	zeroType := reflect.TypeOf((*T)(nil)).Elem()
 
