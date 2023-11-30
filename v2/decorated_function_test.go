@@ -25,8 +25,17 @@ func TestDecoratedFunctionCallBasicFunctionality(t *testing.T) {
 		t.Errorf("Expected 'test/processed', got '%s'", res)
 	}
 
-	anyFunction := f.Any()
-	anyRes, err := anyFunction(context.Background(), "test")
+	af, err := f.Any()
+	if err != nil {
+		t.Errorf("Unexpected error: %v", err)
+	}
+	if af.GetRequestType().String() != "string" {
+		t.Errorf("request ypte is 'string', got '%s'", af.GetRequestType().String())
+	}
+	if af.GetResponseType().String() != "string" {
+		t.Errorf("response ypte is 'string', got '%s'", af.GetResponseType().String())
+	}
+	anyRes, err := af.Call(context.Background(), "test")
 	if err != nil {
 		t.Errorf("Unexpected error: %v", err)
 	}

@@ -50,6 +50,68 @@ func TestGetGenericType(t *testing.T) {
 	}
 }
 
+// TestEqualType - EqualType 함수를 테스트하기 위한 함수
+func TestEqualType(t *testing.T) {
+	tests := []struct {
+		name   string
+		t      reflect.Type
+		v      any
+		expect bool
+	}{
+		{
+			name:   "IntType",
+			t:      reflect.TypeOf(0),
+			v:      42,
+			expect: true,
+		},
+		{
+			name:   "IntAndStringType",
+			t:      reflect.TypeOf(0),
+			v:      "hello",
+			expect: false,
+		},
+		{
+			name:   "SliceType",
+			t:      reflect.TypeOf([]int{}),
+			v:      []int{1, 2, 3},
+			expect: true,
+		},
+		{
+			name:   "DifferentSliceType",
+			t:      reflect.TypeOf([]int{}),
+			v:      []string{"a", "b", "c"},
+			expect: false,
+		},
+		{
+			name:   "PointerType",
+			t:      reflect.TypeOf(&struct{}{}),
+			v:      &struct{}{},
+			expect: true,
+		},
+		{
+			name:   "DifferentPointerType",
+			t:      reflect.TypeOf(&struct{}{}),
+			v:      &[]int{},
+			expect: false,
+		},
+		{
+			name:   "VoidType",
+			t:      reflect.TypeOf(VoidType{}),
+			v:      VoidType{},
+			expect: true,
+		},
+		// 다른 타입에 대한 추가 테스트 케이스들...
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := EqualType(tt.t, tt.v); got != tt.expect {
+				t.Errorf("EqualType() = %v, want %v", got, tt.expect)
+			}
+		})
+	}
+}
+
 func Test_zeroValue(t *testing.T) {
 
 	zeroInt := zeroValue[int]()

@@ -10,6 +10,26 @@ func GetGenericType[T any]() reflect.Type {
 	return reflect.TypeOf((*T)(nil)).Elem()
 }
 
+// EqualType | t 와 v 의 타입이 같은지 확인 합니다.
+func EqualType(t reflect.Type, v any) bool {
+	// v의 reflect.Type 을 가져옴
+	valueType := reflect.TypeOf(v)
+
+	// nil 값에 대한 처리
+	if t == nil || valueType == nil {
+		return t == valueType
+	}
+
+	// 포인터와 관련된 타입일 경우, Elem()을 사용하여 실제 타입 비교
+	if t.Kind() == reflect.Ptr || valueType.Kind() == reflect.Ptr {
+		return reflect.PtrTo(t).AssignableTo(reflect.PtrTo(valueType)) ||
+			reflect.PtrTo(valueType).AssignableTo(reflect.PtrTo(t))
+	}
+
+	// slice, struct, interface 등 다른 케이스들
+	return t.AssignableTo(valueType) || valueType.AssignableTo(t)
+}
+
 // zeroValue | 제네릭 타입의 zero value 를 반환합니다.
 func zeroValue[T any]() T {
 	zeroType := reflect.TypeOf((*T)(nil)).Elem()

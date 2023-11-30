@@ -6,9 +6,6 @@ import (
 	"fmt"
 )
 
-// AnyFunction | 제네럴 하게 사용하는 AnyFunction 타입
-type AnyFunction func(ctx context.Context, req any) (res any, err error)
-
 type DecoratedFunction[REQ any, RES any] struct {
 	panicHandling       bool
 	requestDecorators   []func(ctx context.Context, req REQ) (REQ, error)
@@ -69,12 +66,15 @@ func (f *DecoratedFunction[REQ, RES]) call(ctx context.Context, req REQ) (RES, e
 	return res, nil
 }
 
-func (f *DecoratedFunction[REQ, RES]) Any() AnyFunction {
-	return func(ctx context.Context, req any) (res any, err error) {
-		reqTyped, ok := req.(REQ)
-		if !ok {
-			return zeroValue[RES](), errors.New("REQ type convert failed")
-		}
-		return f.Call(ctx, reqTyped)
-	}
+func (f *DecoratedFunction[REQ, RES]) Any() (AnyFunction, error) {
+	return NewAnyFunction(
+		GetGenericType[REQ](),
+		GetGenericType[RES](),
+		func(ctx context.Context, req any) (res any, err error) {
+			reqTyped, ok := req.(REQ)
+			if !ok {
+				return zeroValue[RES](), errors.New("REQ type convert failed")
+			}
+			return f.Call(ctx, reqTyped)
+		})
 }
