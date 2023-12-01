@@ -107,7 +107,7 @@ func (r *functionRegistry) validateConnectionFunction(fromNode, toNode *Function
 
 		// 응답, 요청 타입을 짝으로 전부 체크
 		for i := 0; i < len(checkList); i += 2 {
-			if !checkList[0].AssignableTo(checkList[i]) {
+			if !checkList[i].AssignableTo(checkList[i+1]) {
 				// 하나라도 타입이 맞지 않으면 에러!
 				return fmt.Errorf("checkList[%d] (%s) not equal checkList[%d] (%s)",
 					i,
